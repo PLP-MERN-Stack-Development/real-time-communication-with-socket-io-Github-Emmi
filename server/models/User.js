@@ -49,9 +49,9 @@ const userSchema = new mongoose.Schema(
 );
 
 // Hash password before saving
-userSchema.pre('save', async function (next) {
+userSchema.pre('save', async function () {
   if (!this.isModified('password')) {
-    next();
+    return;
   }
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
@@ -63,11 +63,10 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
 };
 
 // Update avatar URL with username
-userSchema.pre('save', function (next) {
+userSchema.pre('save', function () {
   if (this.isNew && this.avatar.includes('ui-avatars.com')) {
     this.avatar = `https://ui-avatars.com/api/?background=random&name=${this.username}`;
   }
-  next();
 });
 
 const User = mongoose.model('User', userSchema);

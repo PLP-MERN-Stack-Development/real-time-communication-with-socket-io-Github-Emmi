@@ -54,12 +54,11 @@ const roomSchema = new mongoose.Schema(
 );
 
 // Automatically add creator as admin and member
-roomSchema.pre('save', function (next) {
+roomSchema.pre('save', function () {
   if (this.isNew) {
     this.members.push(this.creator);
     this.admins.push(this.creator);
   }
-  next();
 });
 
 const Room = mongoose.model('Room', roomSchema);

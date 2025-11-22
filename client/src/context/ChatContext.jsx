@@ -1,3 +1,4 @@
+// client/src/context/ChatContext.jsx
 import { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { socket } from '../socket/socket';
@@ -131,7 +132,8 @@ export const ChatProvider = ({ children }) => {
   // Fetch rooms
   const fetchRooms = useCallback(async () => {
     try {
-      const response = await api.get('/rooms/my-rooms');
+      // Fetch all public rooms instead of just user's rooms
+      const response = await api.get('/rooms');
       setRooms(response.data.data);
     } catch (error) {
       console.error('Error fetching rooms:', error);

@@ -73,10 +73,16 @@ app.get('/health', (req, res) => {
 // Setup Socket.io event handlers
 setupSocketHandlers(io);
 
-// Error handling middleware
-app.use((err, req, res) => {
+// Error handling middleware (must be last)
+app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({
+  
+  // Don't send response if headers already sent
+  if (res.headersSent) {
+    return next(err);
+  }
+  
+  res.status(err.status || 500).json({
     success: false,
     error: err.message || 'Internal Server Error',
   });

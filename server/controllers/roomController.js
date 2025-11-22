@@ -6,6 +6,7 @@ const asyncHandler = require('../middleware/asyncHandler');
 const getRooms = asyncHandler(async (req, res) => {
   const rooms = await Room.find({ isActive: true })
     .populate('creator', 'username avatar')
+    .populate('members', 'username avatar status')
     .populate('lastMessage')
     .sort({ updatedAt: -1 });
 
@@ -127,7 +128,24 @@ const deleteRoom = asyncHandler(async (req, res) => {
     return res.status(404).json(errorResponse('Room not found', 404));
   }
 
-  // Check if user is creator
+  // For direct messages, allow any member to delete
+  if (room.roomType === 'direct') {
+    const isMember = room.members.some(
+      (member) => member.toString() === req.user._id.toString()
+    );
+    
+    if (!isMember) {
+      return res.status(403).json(errorResponse('Not authorized', 403));
+    }
+    
+    // Mark room as inactive
+    room.isActive = false;
+    await room.save();
+    
+    return res.json(successResponse(null, 'Conversation deleted successfully'));
+  }
+
+  // For group rooms, only creator can delete
   if (room.creator.toString() !== req.user._id.toString()) {
     return res.status(403).json(errorResponse('Not authorized', 403));
   }

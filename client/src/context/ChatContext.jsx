@@ -26,6 +26,7 @@ export const ChatProvider = ({ children }) => {
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [typingUsers, setTypingUsers] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadRooms, setUnreadRooms] = useState({}); // Track unread messages per room
 
   // Connect to socket
   useEffect(() => {
@@ -53,6 +54,14 @@ export const ChatProvider = ({ children }) => {
 
     const onReceiveMessage = (message) => {
       setMessages((prev) => [...prev, message]);
+      
+      // Update unread count for the room if not currently viewing it
+      if (message.room !== currentRoom && message.sender._id !== user?._id) {
+        setUnreadRooms(prev => ({
+          ...prev,
+          [message.room]: (prev[message.room] || 0) + 1
+        }));
+      }
       
       // Play sound and show notification if message is not from current user
       if (message.sender._id !== user?._id) {
@@ -144,6 +153,12 @@ export const ChatProvider = ({ children }) => {
   const joinRoom = useCallback((roomId) => {
     socket.emit('join_room', roomId);
     setCurrentRoom(roomId);
+    // Clear unread count for this room when joining
+    setUnreadRooms(prev => {
+      const updated = { ...prev };
+      delete updated[roomId];
+      return updated;
+    });
   }, []);
 
   // Leave room
@@ -152,6 +167,9 @@ export const ChatProvider = ({ children }) => {
     if (currentRoom === roomId) {
       setCurrentRoom(null);
     }
+    // Remove room from state when user leaves
+    setRooms(prev => prev.filter(r => r._id !== roomId));
+    setMessages([]);
   }, [currentRoom]);
 
   // Send message
@@ -204,15 +222,37 @@ export const ChatProvider = ({ children }) => {
   // Start direct chat with a user
   const startDirectChat = useCallback(async (userId) => {
     try {
+      // First, check if DM already exists in current rooms
+      const existingDM = rooms.find(room => 
+        room.roomType === 'direct' && 
+        room.members?.some(member => (member._id || member) === userId)
+      );
+
+      if (existingDM) {
+        // Open existing conversation
+        joinRoom(existingDM._id);
+        await loadRoomMessages(existingDM._id);
+        return;
+      }
+
+      // Create new DM
       const response = await api.post('/rooms/direct', { recipientId: userId });
       const directRoom = response.data.data;
-      await fetchRooms();
+      
+      // Add to rooms if not already there
+      setRooms(prev => {
+        const exists = prev.find(r => r._id === directRoom._id);
+        return exists ? prev : [...prev, directRoom];
+      });
+      
+      // Join the room
       joinRoom(directRoom._id);
-      toast.success('Direct chat started');
+      await loadRoomMessages(directRoom._id);
     } catch (error) {
+      console.error('Error starting direct chat:', error);
       toast.error(error.response?.data?.error || 'Failed to start chat');
     }
-  }, [fetchRooms, joinRoom]);
+  }, [rooms, joinRoom, loadRoomMessages]);
 
   const value = {
     isConnected,
@@ -222,6 +262,7 @@ export const ChatProvider = ({ children }) => {
     onlineUsers,
     typingUsers,
     unreadCount,
+    unreadRooms,
     setUnreadCount,
     fetchRooms,
     joinRoom,

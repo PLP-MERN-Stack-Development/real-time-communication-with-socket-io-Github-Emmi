@@ -51,7 +51,7 @@ const CreateRoomModal = ({ isOpen, onClose }) => {
           </h2>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-400"
           >
             <X className="w-5 h-5" />
           </button>

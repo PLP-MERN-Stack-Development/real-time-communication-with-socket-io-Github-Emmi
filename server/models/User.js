@@ -29,6 +29,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: 'https://ui-avatars.com/api/?background=random&name=User',
     },
+    bio: {
+      type: String,
+      default: '',
+      maxlength: [200, 'Bio cannot exceed 200 characters'],
+    },
     status: {
       type: String,
       enum: ['online', 'offline', 'away'],

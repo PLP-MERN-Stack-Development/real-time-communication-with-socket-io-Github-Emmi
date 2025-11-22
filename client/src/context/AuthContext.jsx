@@ -40,6 +40,7 @@ export const AuthProvider = ({ children }) => {
         username: data.username,
         email: data.email,
         avatar: data.avatar,
+        bio: data.bio,
       });
       setToken(data.token);
       
@@ -48,6 +49,7 @@ export const AuthProvider = ({ children }) => {
         username: data.username,
         email: data.email,
         avatar: data.avatar,
+        bio: data.bio,
       }));
       localStorage.setItem('token', data.token);
       
@@ -70,6 +72,7 @@ export const AuthProvider = ({ children }) => {
         username: data.username,
         email: data.email,
         avatar: data.avatar,
+        bio: data.bio,
       });
       setToken(data.token);
       
@@ -78,6 +81,7 @@ export const AuthProvider = ({ children }) => {
         username: data.username,
         email: data.email,
         avatar: data.avatar,
+        bio: data.bio,
       }));
       localStorage.setItem('token', data.token);
       

@@ -1,20 +1,82 @@
-import { useState } from 'react';
-import { X, User, Bell, LogOut } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, User, Bell, LogOut, Camera } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
+import api from '../utils/api';
 
 const SettingsModal = ({ isOpen, onClose }) => {
   const { user, logout, updateProfile } = useAuth();
   const [activeTab, setActiveTab] = useState('profile');
   const [formData, setFormData] = useState({
     username: user?.username || '',
+    bio: user?.bio || '',
     avatar: user?.avatar || '',
   });
   const [loading, setLoading] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  // Sync form data when user updates
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        username: user.username || '',
+        bio: user.bio || '',
+        avatar: user.avatar || '',
+      });
+    }
+  }, [user]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size must be less than 5MB');
+      return;
+    }
+
+    setUploadingImage(true);
+    const formDataUpload = new FormData();
+    formDataUpload.append('file', file);
+
+    try {
+      const response = await api.post('/upload', formDataUpload, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      const imageUrl = response.data.data.fileUrl;
+      
+      // Update profile immediately with new avatar
+      await updateProfile({ 
+        username: user.username,
+        bio: user.bio || '',
+        avatar: imageUrl 
+      });
+      
+      // Update form data to reflect the change
+      setFormData((prev) => ({ ...prev, avatar: imageUrl }));
+      
+      toast.success('Profile picture updated successfully');
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error(error.response?.data?.error || 'Failed to upload image');
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   const handleUpdateProfile = async (e) => {
@@ -42,7 +104,7 @@ const SettingsModal = ({ isOpen, onClose }) => {
           </h2>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-400"
           >
             <X className="w-6 h-6" />
           </button>
@@ -78,26 +140,37 @@ const SettingsModal = ({ isOpen, onClose }) => {
         <div className="flex-1 overflow-y-auto p-6">
           {activeTab === 'profile' && (
             <form onSubmit={handleUpdateProfile} className="space-y-6">
-              {/* Avatar */}
-              <div className="flex items-center space-x-4">
-                <img
-                  src={formData.avatar || user?.avatar}
-                  alt={user?.username}
-                  className="w-20 h-20 rounded-full"
-                />
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Avatar URL
+              {/* Avatar with upload */}
+              <div className="flex flex-col items-center space-y-4">
+                <div className="relative group">
+                  <img
+                    src={formData.avatar || user?.avatar}
+                    alt={user?.username}
+                    className="w-32 h-32 rounded-full object-cover border-4 border-gray-200 dark:border-gray-600"
+                  />
+                  <label
+                    htmlFor="avatar-upload"
+                    className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                  >
+                    <Camera className="w-8 h-8 text-white" />
+                    {uploadingImage && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-75 rounded-full">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                      </div>
+                    )}
                   </label>
                   <input
-                    type="url"
-                    name="avatar"
-                    value={formData.avatar}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    placeholder="https://example.com/avatar.jpg"
+                    id="avatar-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                    disabled={uploadingImage}
                   />
                 </div>
+                <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
+                  Click on avatar to change profile picture
+                </p>
               </div>
 
               {/* Username */}
@@ -114,6 +187,25 @@ const SettingsModal = ({ isOpen, onClose }) => {
                   placeholder="Your username"
                   required
                 />
+              </div>
+
+              {/* Bio */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Bio
+                </label>
+                <textarea
+                  name="bio"
+                  value={formData.bio}
+                  onChange={handleChange}
+                  rows={3}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
+                  placeholder="Tell us about yourself..."
+                  maxLength={200}
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {formData.bio.length}/200 characters
+                </p>
               </div>
 
               {/* Email (readonly) */}

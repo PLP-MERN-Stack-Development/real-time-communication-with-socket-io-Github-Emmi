@@ -38,6 +38,7 @@ const register = asyncHandler(async (req, res) => {
           username: user.username,
           email: user.email,
           avatar: user.avatar,
+          bio: user.bio,
           token: generateToken(user._id),
         },
         'User registered successfully'
@@ -67,6 +68,7 @@ const login = asyncHandler(async (req, res) => {
           username: user.username,
           email: user.email,
           avatar: user.avatar,
+          bio: user.bio,
           token: generateToken(user._id),
         },
         'Login successful'
@@ -88,6 +90,7 @@ const getProfile = asyncHandler(async (req, res) => {
         username: user.username,
         email: user.email,
         avatar: user.avatar,
+        bio: user.bio,
         status: user.status,
         lastSeen: user.lastSeen,
       })
@@ -105,6 +108,7 @@ const updateProfile = asyncHandler(async (req, res) => {
     user.username = req.body.username || user.username;
     user.email = req.body.email || user.email;
     user.avatar = req.body.avatar || user.avatar;
+    user.bio = req.body.bio !== undefined ? req.body.bio : user.bio;
 
     const updatedUser = await user.save();
 
@@ -115,6 +119,7 @@ const updateProfile = asyncHandler(async (req, res) => {
           username: updatedUser.username,
           email: updatedUser.email,
           avatar: updatedUser.avatar,
+          bio: updatedUser.bio,
         },
         'Profile updated successfully'
       )

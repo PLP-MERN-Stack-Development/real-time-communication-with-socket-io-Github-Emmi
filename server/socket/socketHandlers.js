@@ -118,7 +118,10 @@ const setupSocketHandlers = (io) => {
         // Update room's last message
         if (roomId) {
           await Room.findByIdAndUpdate(roomId, { lastMessage: message._id });
-          io.to(roomId).emit('receive_message', populatedMessage);
+          // Include room field in the emitted message
+          const messageWithRoom = populatedMessage.toObject();
+          messageWithRoom.room = roomId;
+          io.to(roomId).emit('receive_message', messageWithRoom);
         } else {
           io.emit('receive_message', populatedMessage);
         }

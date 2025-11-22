@@ -1,9 +1,10 @@
 const User = require('../models/User');
 const { generateToken } = require('../utils/tokenUtils');
 const { errorResponse, successResponse } = require('../utils/helpers');
+const asyncHandler = require('../middleware/asyncHandler');
 
 // Register new user
-const register = async (req, res) => {
+const register = asyncHandler(async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
@@ -49,10 +50,10 @@ const register = async (req, res) => {
   } catch (error) {
     res.status(500).json(errorResponse(error.message));
   }
-};
+});
 
 // Login user
-const login = async (req, res) => {
+const login = asyncHandler(async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -82,10 +83,10 @@ const login = async (req, res) => {
   } catch (error) {
     res.status(500).json(errorResponse(error.message));
   }
-};
+});
 
 // Get current user profile
-const getProfile = async (req, res) => {
+const getProfile = asyncHandler(async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
 
@@ -106,10 +107,10 @@ const getProfile = async (req, res) => {
   } catch (error) {
     res.status(500).json(errorResponse(error.message));
   }
-};
+});
 
 // Update user profile
-const updateProfile = async (req, res) => {
+const updateProfile = asyncHandler(async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
 
@@ -137,10 +138,10 @@ const updateProfile = async (req, res) => {
   } catch (error) {
     res.status(500).json(errorResponse(error.message));
   }
-};
+});
 
 // Get all users
-const getUsers = async (req, res) => {
+const getUsers = asyncHandler(async (req, res) => {
   try {
     const users = await User.find({})
       .select('-password')
@@ -150,7 +151,7 @@ const getUsers = async (req, res) => {
   } catch (error) {
     res.status(500).json(errorResponse(error.message));
   }
-};
+});
 
 module.exports = {
   register,

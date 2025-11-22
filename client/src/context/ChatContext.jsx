@@ -201,6 +201,19 @@ export const ChatProvider = ({ children }) => {
     }
   }, [fetchRooms]);
 
+  // Start direct chat with a user
+  const startDirectChat = useCallback(async (userId) => {
+    try {
+      const response = await api.post('/rooms/direct', { recipientId: userId });
+      const directRoom = response.data.data;
+      await fetchRooms();
+      joinRoom(directRoom._id);
+      toast.success('Direct chat started');
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Failed to start chat');
+    }
+  }, [fetchRooms, joinRoom]);
+
   const value = {
     isConnected,
     messages,
@@ -220,6 +233,7 @@ export const ChatProvider = ({ children }) => {
     addReaction,
     loadRoomMessages,
     createRoom,
+    startDirectChat,
   };
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;

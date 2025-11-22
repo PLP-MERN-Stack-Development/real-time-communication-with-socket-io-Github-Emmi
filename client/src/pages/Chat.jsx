@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useChat } from '../context/ChatContext';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
+import RoomHeader from '../components/RoomHeader';
 import MessageList from '../components/MessageList';
 import MessageInput from '../components/MessageInput';
 import CreateRoomModal from '../components/CreateRoomModal';
@@ -37,6 +38,7 @@ const Chat = () => {
         <div className="flex-1 flex flex-col">
           {currentRoom ? (
             <>
+              <RoomHeader />
               <MessageList />
               <MessageInput />
             </>

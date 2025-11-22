@@ -2,11 +2,13 @@ import { useAuth } from '../context/AuthContext';
 import { useChat } from '../context/ChatContext';
 import { LogOut, Settings, Bell, BellOff } from 'lucide-react';
 import { useState } from 'react';
+import SettingsModal from './SettingsModal';
 
 const Header = () => {
   const { user, logout } = useAuth();
   const { isConnected, unreadCount, setUnreadCount } = useChat();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [showSettings, setShowSettings] = useState(false);
 
   const toggleNotifications = () => {
     setNotificationsEnabled(!notificationsEnabled);
@@ -71,6 +73,7 @@ const Header = () => {
 
           {/* Settings */}
           <button
+            onClick={() => setShowSettings(true)}
             className="p-2 text-gray-600 dark:text-gray-400 hover:text-primary-500 transition-colors"
             title="Settings"
           >
@@ -87,6 +90,9 @@ const Header = () => {
           </button>
         </div>
       </div>
+
+      {/* Settings Modal */}
+      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
     </header>
   );
 };

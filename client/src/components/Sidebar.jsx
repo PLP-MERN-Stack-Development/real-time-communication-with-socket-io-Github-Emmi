@@ -1,9 +1,11 @@
 import { useChat } from '../context/ChatContext';
+import { useAuth } from '../context/AuthContext';
 import { formatRelativeTime } from '../utils/helpers';
-import { Users, Hash } from 'lucide-react';
+import { Users, Hash, MessageCircle } from 'lucide-react';
 
 const Sidebar = () => {
-  const { rooms, currentRoom, joinRoom, onlineUsers } = useChat();
+  const { rooms, currentRoom, joinRoom, onlineUsers, startDirectChat } = useChat();
+  const { user } = useAuth();
 
   return (
     <div className="w-64 bg-gray-100 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 flex flex-col">
@@ -61,16 +63,30 @@ const Sidebar = () => {
             Online ({onlineUsers.length})
           </h3>
           <div className="space-y-2">
-            {onlineUsers.map((user) => (
-              <div
-                key={user.userId}
-                className="flex items-center space-x-2 text-sm"
+            {onlineUsers.map((onlineUser) => (
+              <button
+                key={onlineUser.userId}
+                onClick={() => onlineUser.userId !== user?._id && startDirectChat(onlineUser.userId)}
+                disabled={onlineUser.userId === user?._id}
+                className={`w-full flex items-center space-x-2 text-sm px-2 py-1 rounded transition-colors ${
+                  onlineUser.userId === user?._id
+                    ? 'cursor-default'
+                    : 'hover:bg-gray-200 dark:hover:bg-gray-800 cursor-pointer'
+                }`}
+                title={onlineUser.userId === user?._id ? 'You' : `Chat with ${onlineUser.username}`}
               >
                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span className="text-gray-700 dark:text-gray-300 truncate">
-                  {user.username}
+                <span className={`flex-1 text-left truncate ${
+                  onlineUser.userId === user?._id
+                    ? 'text-gray-500 dark:text-gray-500'
+                    : 'text-gray-700 dark:text-gray-300'
+                }`}>
+                  {onlineUser.username} {onlineUser.userId === user?._id && '(You)'}
                 </span>
-              </div>
+                {onlineUser.userId !== user?._id && (
+                  <MessageCircle className="w-3 h-3 text-gray-400" />
+                )}
+              </button>
             ))}
           </div>
         </div>
